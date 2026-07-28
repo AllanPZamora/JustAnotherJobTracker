@@ -28,6 +28,12 @@ const deleteModalText = document.getElementById('delete-modal-text');
 const deleteCancelBtn = document.getElementById('delete-cancel-btn');
 const deleteConfirmBtn = document.getElementById('delete-confirm-btn');
 
+const notesModal = document.getElementById('notes-modal');
+const notesModalTitle = document.getElementById('notes-modal-title');
+const notesModalSubtitle = document.getElementById('notes-modal-subtitle');
+const notesModalBody = document.getElementById('notes-modal-body');
+const notesCloseBtn = document.getElementById('notes-close-btn');
+
 const statusStyles = {
   Wishlist:     'bg-white text-slate-600 border border-slate-300',
   Applied:      'bg-blue-100 text-blue-700',
@@ -49,6 +55,7 @@ const icons = {
   link: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4"><path d="M12.232 4.232a2.5 2.5 0 013.536 3.536l-1.225 1.224a.75.75 0 001.061 1.06l1.224-1.224a4 4 0 00-5.656-5.656l-3 3a4 4 0 00.225 5.865.75.75 0 00.977-1.138 2.5 2.5 0 01-.142-3.667l3-3z"/><path d="M11.603 7.963a.75.75 0 00-.977 1.138 2.5 2.5 0 01.142 3.667l-3 3a2.5 2.5 0 01-3.536-3.536l1.225-1.224a.75.75 0 00-1.061-1.06l-1.224 1.224a4 4 0 105.656 5.656l3-3a4 4 0 00-.225-5.865z"/></svg>`,
   edit: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/></svg>`,
   trash: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.808a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd"/></svg>`,
+  eye: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4"><path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"/><path fill-rule="evenodd" d="M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg>`,
   pin: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5"><path fill-rule="evenodd" d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.109.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 103 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 002.274 1.765 11.842 11.842 0 00.976.544l.062.029.018.008.006.003zM10 11.25a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" clip-rule="evenodd"/></svg>`,
 };
 
@@ -105,6 +112,7 @@ function createRow(data = {}) {
     </td>
     <td class="px-4 py-3">
       <div class="flex items-center gap-2 text-slate-400">
+        <button class="view-notes-btn hover:text-slate-700" title="View notes">${icons.eye}</button>
         <button class="link-btn hover:text-slate-700" title="Open job link">${icons.link}</button>
         <button class="edit-row-btn hover:text-slate-700" title="Edit">${icons.edit}</button>
         <button class="delete-row-btn hover:text-red-500" title="Delete">${icons.trash}</button>
@@ -163,6 +171,32 @@ function loadFromStorage() {
     renderRows(defaultRows);
   }
 }
+
+function openNotesModal(row) {
+  const role = row?.dataset.role || 'Untitled role';
+  const company = row?.dataset.company || '';
+  const notes = row?.dataset.notes || '';
+
+  notesModalTitle.textContent = role;
+  notesModalSubtitle.textContent = company;
+  notesModalBody.textContent = notes || 'No notes added yet.';
+
+  notesModal.classList.remove('hidden');
+  notesModal.classList.add('flex');
+}
+
+function closeNotesModal() {
+  notesModal.classList.add('hidden');
+  notesModal.classList.remove('flex');
+}
+
+notesCloseBtn.addEventListener('click', closeNotesModal);
+notesModal.addEventListener('click', (event) => {
+  if (event.target === notesModal) closeNotesModal();
+});
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && !notesModal.classList.contains('hidden')) closeNotesModal();
+});
 
 function openDeleteModal(row) {
   pendingDeleteRow = row;
@@ -283,6 +317,13 @@ tableBody.addEventListener('click', (event) => {
   const deleteBtn = event.target.closest('.delete-row-btn');
   const editBtn = event.target.closest('.edit-row-btn');
   const linkBtn = event.target.closest('.link-btn');
+  const viewBtn = event.target.closest('.view-notes-btn');
+
+  if (viewBtn) {
+    const row = viewBtn.closest('tr');
+    if (row) openNotesModal(row);
+    return;
+  }
 
   if (deleteBtn) {
     const row = deleteBtn.closest('tr');

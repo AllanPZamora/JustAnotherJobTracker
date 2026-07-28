@@ -21,6 +21,12 @@ const fieldNotes = document.getElementById('field-notes');
 
 let editingRow = null;
 let selectedWorkMode = '';
+let pendingDeleteRow = null;
+
+const deleteModal = document.getElementById('delete-modal');
+const deleteModalText = document.getElementById('delete-modal-text');
+const deleteCancelBtn = document.getElementById('delete-cancel-btn');
+const deleteConfirmBtn = document.getElementById('delete-confirm-btn');
 
 const statusStyles = {
   Wishlist:     'bg-white text-slate-600 border border-slate-300',
@@ -144,6 +150,36 @@ function loadFromStorage() {
   }
 }
 
+function openDeleteModal(row) {
+  pendingDeleteRow = row;
+  const roleName = row?.dataset.role || 'this entry';
+  const companyName = row?.dataset.company ? ` at ${row.dataset.company}` : '';
+  deleteModalText.textContent = `"${roleName}${companyName}" will be permanently removed.`;
+  deleteModal.classList.remove('hidden');
+  deleteModal.classList.add('flex');
+}
+
+function closeDeleteModal() {
+  deleteModal.classList.add('hidden');
+  deleteModal.classList.remove('flex');
+  pendingDeleteRow = null;
+}
+
+deleteCancelBtn.addEventListener('click', closeDeleteModal);
+deleteModal.addEventListener('click', (event) => {
+  if (event.target === deleteModal) closeDeleteModal();
+});
+deleteConfirmBtn.addEventListener('click', () => {
+  if (pendingDeleteRow) {
+    pendingDeleteRow.remove();
+    saveToStorage();
+  }
+  closeDeleteModal();
+});
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && !deleteModal.classList.contains('hidden')) closeDeleteModal();
+});
 function setWorkMode(mode) {
   selectedWorkMode = mode;
   workModeBtns.forEach(btn => {
@@ -236,8 +272,7 @@ tableBody.addEventListener('click', (event) => {
 
   if (deleteBtn) {
     const row = deleteBtn.closest('tr');
-    if (row) row.remove();
-    saveToStorage();
+    if (row) openDeleteModal(row);
     return;
   }
 

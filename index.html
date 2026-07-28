@@ -9,12 +9,13 @@
 
     <style>
       table { table-layout: fixed; }
-      th:nth-child(1), td:nth-child(1) { width: 16%; }
-      th:nth-child(2), td:nth-child(2) { width: 18%; }
-      th:nth-child(3), td:nth-child(3) { width: 12%; }
-      th:nth-child(4), td:nth-child(4) { width: 14%; }
-      th:nth-child(5), td:nth-child(5) { width: 20%; }
-      th:nth-child(6), td:nth-child(6) { width: 20%; }
+      th:nth-child(1), td:nth-child(1) { width: 15%; }
+      th:nth-child(2), td:nth-child(2) { width: 17%; }
+      th:nth-child(3), td:nth-child(3) { width: 11%; }
+      th:nth-child(4), td:nth-child(4) { width: 13%; }
+      th:nth-child(5), td:nth-child(5) { width: 18%; }
+      th:nth-child(6), td:nth-child(6) { width: 18%; }
+      th:nth-child(7), td:nth-child(7) { width: 4%; }
       td[contenteditable="true"] {
         white-space: nowrap;
         overflow: hidden;
@@ -33,15 +34,17 @@
 </head>
 <body class="bg-slate-50 min-h-screen p-8">
   <div class="max-w-6xl mx-auto">
-  
+
     <div class="flex items-center justify-between mb-6">
       <h1 class="text-2xl font-semibold text-slate-800">Job Application Tracker</h1>
-      <div class="flex gap-2">
-        <button id="remove-row-btn" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-200 text-slate-700 text-lg leading-none hover:bg-slate-300">-</button>
-        <button id="add-row-btn" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 text-white text-lg leading-none hover:bg-slate-700">+</button>
-      </div>
+      <button id="add-row-btn" class="flex items-center gap-1.5 px-3 py-2 rounded-md bg-slate-800 text-white text-sm hover:bg-slate-700">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
+          <path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
+        </svg>
+        Add
+      </button>
     </div>
-  
+
     <div class="bg-white rounded-lg border border-slate-200 overflow-hidden">
       <table class="w-full text-sm text-left">
         <thead class="bg-slate-100 text-slate-600 uppercase text-xs">
@@ -52,6 +55,7 @@
             <th class="px-4 py-3">Status</th>
             <th class="px-4 py-3">Job link</th>
             <th class="px-4 py-3">Notes</th>
+            <th class="px-4 py-3"></th>
           </tr>
         </thead>
         <tbody id="job-table-body" class="divide-y divide-slate-100 text-slate-700">
@@ -70,6 +74,13 @@
             </td>
             <td class="px-4 py-3" contenteditable="true">View</td>
             <td class="px-4 py-3 text-slate-400" contenteditable="true">—</td>
+            <td class="px-4 py-3 text-center">
+              <button class="delete-row-btn text-slate-400 hover:text-red-500">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 mx-auto pointer-events-none">
+                  <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                </svg>
+              </button>
+            </td>
           </tr>
         </tbody>
       </table>

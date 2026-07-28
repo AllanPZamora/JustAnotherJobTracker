@@ -1,4 +1,5 @@
 const addRowBtn = document.getElementById('add-row-btn');
+const removeRowBtn = document.getElementById('remove-row-btn');
 const tableBody = document.getElementById('job-table-body');
 
 const statusOptions = ['Applied', 'Interviewing', 'Offer', 'Rejected', 'Ghosted'];
@@ -31,4 +32,11 @@ addRowBtn.addEventListener('click', () => {
 
   const firstCell = newRow.querySelector('td[contenteditable="true"]');
   if (firstCell) firstCell.focus();
+});
+
+removeRowBtn.addEventListener('click', () => {
+  const lastRow = tableBody.lastElementChild;
+  if (lastRow) {
+    lastRow.remove();
+  }
 });

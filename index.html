@@ -6,13 +6,39 @@
     <link href="src/output.css" rel="stylesheet">
     <title>Just Another Job Tracker</title>
     <link rel="icon" type="image/svg+xml" href="src/img/list.svg">
+
+    <style>
+      table { table-layout: fixed; }
+      th:nth-child(1), td:nth-child(1) { width: 16%; }
+      th:nth-child(2), td:nth-child(2) { width: 18%; }
+      th:nth-child(3), td:nth-child(3) { width: 12%; }
+      th:nth-child(4), td:nth-child(4) { width: 14%; }
+      th:nth-child(5), td:nth-child(5) { width: 20%; }
+      th:nth-child(6), td:nth-child(6) { width: 20%; }
+      td[contenteditable="true"] {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        position: relative;
+      }
+      td[contenteditable="true"]:focus {
+        outline: none;
+        white-space: normal;
+        word-break: break-word;
+        background-color: #fff;
+        box-shadow: inset 0 0 0 1px #94a3b8, 0 2px 6px rgba(0,0,0,0.08);
+        z-index: 10;
+      }
+    </style>
 </head>
 <body class="bg-slate-50 min-h-screen p-8">
- 
   <div class="max-w-6xl mx-auto">
- 
-    <h1 class="text-2xl font-semibold text-slate-800 mb-6">Job Application Tracker</h1>
- 
+
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="text-2xl font-semibold text-slate-800">Job Application Tracker</h1>
+      <button id="add-row-btn" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 text-white text-lg leading-none hover:bg-slate-700">+</button>
+    </div>
+
     <div class="bg-white rounded-lg border border-slate-200 overflow-hidden">
       <table class="w-full text-sm text-left">
         <thead class="bg-slate-100 text-slate-600 uppercase text-xs">
@@ -25,19 +51,28 @@
             <th class="px-4 py-3">Notes</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-slate-100 text-slate-700">
+        <tbody id="job-table-body" class="divide-y divide-slate-100 text-slate-700">
           <tr>
-            <td class="px-4 py-3">Acme Corp</td>
-            <td class="px-4 py-3">Frontend Developer</td>
-            <td class="px-4 py-3">2026-07-10</td>
-            <td class="px-4 py-3">Applied</td>
-            <td class="px-4 py-3 text-blue-600 underline">View</td>
-            <td class="px-4 py-3 text-slate-400">—</td>
+            <td class="px-4 py-3" contenteditable="true">Acme Corp</td>
+            <td class="px-4 py-3" contenteditable="true">Frontend Developer</td>
+            <td class="px-4 py-3" contenteditable="true">2026-07-10</td>
+            <td class="px-4 py-3">
+              <select class="status-select bg-transparent border-none text-sm">
+                <option>Applied</option>
+                <option>Interviewing</option>
+                <option>Offer</option>
+                <option>Rejected</option>
+                <option>Ghosted</option>
+              </select>
+            </td>
+            <td class="px-4 py-3" contenteditable="true">View</td>
+            <td class="px-4 py-3 text-slate-400" contenteditable="true">—</td>
           </tr>
         </tbody>
       </table>
     </div>
   </div>
- 
+
+<script src="src/app.js"></script>
 </body>
 </html>

@@ -7,9 +7,37 @@
     <title>Just Another Job Tracker</title>
     <link rel="icon" type="image/svg+xml" href="src/img/list.svg">
 </head>
-<body>
-  <h1 class="text-3xl font-bold underline">
-    Hello world!ewe
-  </h1>
+<body class="bg-slate-50 min-h-screen p-8">
+ 
+  <div class="max-w-6xl mx-auto">
+ 
+    <h1 class="text-2xl font-semibold text-slate-800 mb-6">Job Application Tracker</h1>
+ 
+    <div class="bg-white rounded-lg border border-slate-200 overflow-hidden">
+      <table class="w-full text-sm text-left">
+        <thead class="bg-slate-100 text-slate-600 uppercase text-xs">
+          <tr>
+            <th class="px-4 py-3">Company</th>
+            <th class="px-4 py-3">Role</th>
+            <th class="px-4 py-3">Date applied</th>
+            <th class="px-4 py-3">Status</th>
+            <th class="px-4 py-3">Job link</th>
+            <th class="px-4 py-3">Notes</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 text-slate-700">
+          <tr>
+            <td class="px-4 py-3">Acme Corp</td>
+            <td class="px-4 py-3">Frontend Developer</td>
+            <td class="px-4 py-3">2026-07-10</td>
+            <td class="px-4 py-3">Applied</td>
+            <td class="px-4 py-3 text-blue-600 underline">View</td>
+            <td class="px-4 py-3 text-slate-400">—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+ 
 </body>
 </html>

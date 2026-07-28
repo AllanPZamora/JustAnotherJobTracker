@@ -56,6 +56,14 @@ function initials(name) {
   return (name || '?').trim().charAt(0).toUpperCase();
 }
 
+function shortDate(dateStr) {
+  if (!dateStr) return '';
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return dateStr;
+  const [year, month, day] = parts;
+  return `${year.slice(-2)}-${month}-${day}`;
+}
+
 function createRow(data = {}) {
   const row = document.createElement('tr');
   row.className = 'align-top';
@@ -87,8 +95,14 @@ function createRow(data = {}) {
       ${data.workMode ? `<span class="inline-flex items-center gap-1 mt-1 text-[10px] font-medium uppercase tracking-wide text-slate-500 bg-slate-100 border border-slate-200 rounded px-1.5 py-0.5">${icons.pin}${data.workMode}</span>` : ''}
     </td>
     <td class="px-4 py-3 cell-truncate">${data.salary || '—'}</td>
-    <td class="px-4 py-3 cell-truncate">${data.date || '—'}</td>
-    <td class="px-4 py-3 cell-truncate">${data.followUp || '—'}</td>
+    <td class="px-4 py-3 cell-truncate">
+      <span class="hidden sm:inline">${data.date || '—'}</span>
+      <span class="sm:hidden">${data.date ? shortDate(data.date) : '—'}</span>
+    </td>
+    <td class="px-4 py-3 cell-truncate">
+      <span class="hidden sm:inline">${data.followUp || '—'}</span>
+      <span class="sm:hidden">${data.followUp ? shortDate(data.followUp) : '—'}</span>
+    </td>
     <td class="px-4 py-3">
       <div class="flex items-center gap-2 text-slate-400">
         <button class="link-btn hover:text-slate-700" title="Open job link">${icons.link}</button>

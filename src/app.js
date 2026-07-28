@@ -91,10 +91,16 @@ function createRow(data = {}) {
       </div>
     </td>
     <td class="px-4 py-3">
-      <div class="relative inline-block">
-        <select class="status-select appearance-none text-xs font-semibold px-2.5 py-1.5 pr-6 rounded-md border-none ${statusClass}">
-          ${statusOptions.map(opt => `<option value="${opt}" ${opt === status ? 'selected' : ''}>${opt}</option>`).join('')}
-        </select>
+      <div class="relative inline-block status-wrapper" data-value="${status}">
+        <button type="button" class="status-trigger inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-md ${statusClass}">
+          <span class="status-label">${status}</span>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3 opacity-60">
+            <path fill-rule="evenodd" d="M5.22 7.22a.75.75 0 011.06 0L10 10.94l3.72-3.72a.75.75 0 111.06 1.06l-4.25 4.25a.75.75 0 01-1.06 0L5.22 8.28a.75.75 0 010-1.06z" clip-rule="evenodd" />
+          </svg>
+        </button>
+        <div class="status-dropdown hidden absolute left-0 mt-1 z-20 bg-white border border-slate-200 rounded-md shadow-lg overflow-hidden text-xs w-32">
+          ${statusOptions.map(opt => `<button type="button" class="status-option block w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700" data-value="${opt}">${opt}</button>`).join('')}
+        </div>
       </div>
     </td>
     <td class="px-4 py-3">
@@ -137,7 +143,7 @@ function getRowData(row) {
   return {
     company: row.dataset.company || '',
     role: row.dataset.role || '',
-    status: row.querySelector('.status-select').value,
+    status: row.querySelector('.status-wrapper').dataset.value,
     salary: row.dataset.salary || '',
     workMode: row.dataset.workMode || '',
     location: row.dataset.location || '',
@@ -249,7 +255,7 @@ function openModal(mode, row = null) {
   if (mode === 'edit' && row) {
     fieldCompany.value = row.dataset.company || '';
     fieldRole.value = row.dataset.role || '';
-    fieldStatus.value = row.querySelector('.status-select').value;
+    fieldStatus.value = row.querySelector('.status-wrapper').dataset.value;
     fieldSalary.value = row.dataset.salary || '';
     fieldLocation.value = row.dataset.location || '';
     fieldDate.value = row.dataset.date || '';
@@ -346,15 +352,43 @@ tableBody.addEventListener('click', (event) => {
   }
 });
 
-tableBody.addEventListener('change', (event) => {
-  if (event.target.matches('.status-select')) {
-    const select = event.target;
-    const allStatusClasses = Object.values(statusStyles).flatMap(c => c.split(' '));
-    select.classList.remove(...allStatusClasses);
-    const newClasses = (statusStyles[select.value] || statusStyles.Applied).split(' ');
-    select.classList.add(...newClasses);
-    saveToStorage();
+function closeAllStatusDropdowns() {
+  document.querySelectorAll('.status-dropdown').forEach(dd => dd.classList.add('hidden'));
+}
+
+tableBody.addEventListener('click', (event) => {
+  const trigger = event.target.closest('.status-trigger');
+  const option = event.target.closest('.status-option');
+
+  if (trigger) {
+    const dropdown = trigger.nextElementSibling;
+    const isOpen = !dropdown.classList.contains('hidden');
+    closeAllStatusDropdowns();
+    if (!isOpen) dropdown.classList.remove('hidden');
+    return;
   }
+
+  if (option) {
+    const wrapper = option.closest('.status-wrapper');
+    const newStatus = option.dataset.value;
+    const trigger = wrapper.querySelector('.status-trigger');
+    const label = wrapper.querySelector('.status-label');
+
+    wrapper.dataset.value = newStatus;
+    label.textContent = newStatus;
+
+    const allStatusClasses = Object.values(statusStyles).flatMap(c => c.split(' '));
+    trigger.classList.remove(...allStatusClasses);
+    trigger.classList.add(...(statusStyles[newStatus] || statusStyles.Applied).split(' '));
+
+    closeAllStatusDropdowns();
+    saveToStorage();
+    return;
+  }
+});
+
+document.addEventListener('click', (event) => {
+  if (!event.target.closest('.status-wrapper')) closeAllStatusDropdowns();
 });
 
 document.addEventListener('DOMContentLoaded', () => {

@@ -464,7 +464,12 @@ tableBody.addEventListener('click', (event) => {
 });
 
 function closeAllStatusDropdowns() {
-  document.querySelectorAll('.status-dropdown').forEach(dd => dd.classList.add('hidden'));
+  document.querySelectorAll('.status-dropdown').forEach(dd => {
+    dd.classList.add('hidden');
+    dd.style.position = '';
+    dd.style.top = '';
+    dd.style.left = '';
+  });
 }
 
 tableBody.addEventListener('click', (event) => {
@@ -475,7 +480,29 @@ tableBody.addEventListener('click', (event) => {
     const dropdown = trigger.nextElementSibling;
     const isOpen = !dropdown.classList.contains('hidden');
     closeAllStatusDropdowns();
-    if (!isOpen) dropdown.classList.remove('hidden');
+
+    if (!isOpen) {
+      const rect = trigger.getBoundingClientRect();
+
+      // Measure the dropdown's height without flashing it visibly
+      dropdown.style.visibility = 'hidden';
+      dropdown.classList.remove('hidden');
+      const dropdownHeight = dropdown.offsetHeight;
+      dropdown.classList.add('hidden');
+      dropdown.style.visibility = '';
+
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const margin = 8;
+      const openUpward = spaceBelow < dropdownHeight + margin && rect.top > spaceBelow;
+
+      dropdown.style.position = 'fixed';
+      dropdown.style.left = `${rect.left}px`;
+      dropdown.style.top = openUpward
+        ? `${rect.top - dropdownHeight - 4}px`
+        : `${rect.bottom + 4}px`;
+
+      dropdown.classList.remove('hidden');
+    }
     return;
   }
 
@@ -501,6 +528,8 @@ tableBody.addEventListener('click', (event) => {
 document.addEventListener('click', (event) => {
   if (!event.target.closest('.status-wrapper')) closeAllStatusDropdowns();
 });
+
+window.addEventListener('scroll', closeAllStatusDropdowns, true);
 
 document.addEventListener('DOMContentLoaded', () => {
   loadFromStorage();

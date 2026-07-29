@@ -34,6 +34,15 @@ const notesModalSubtitle = document.getElementById('notes-modal-subtitle');
 const notesModalBody = document.getElementById('notes-modal-body');
 const notesCloseBtn = document.getElementById('notes-close-btn');
 
+const searchInput = document.getElementById('search-input');
+const locationFilter = document.getElementById('location-filter');
+const sortSelect = document.getElementById('sort-select');
+const sortDirectionBtn = document.getElementById('sort-direction-btn');
+let sortDirection = 'desc';
+
+const statusTabsContainer = document.getElementById('status-tabs');
+let currentStatusFilter = 'All';
+
 const statusStyles = {
   Wishlist:     'bg-white text-slate-600 border border-slate-300',
   Applied:      'bg-blue-100 text-blue-700',
@@ -58,6 +67,106 @@ const icons = {
   eye: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4"><path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"/><path fill-rule="evenodd" d="M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg>`,
   pin: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5"><path fill-rule="evenodd" d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.109.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 103 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 002.274 1.765 11.842 11.842 0 00.976.544l.062.029.018.008.006.003zM10 11.25a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" clip-rule="evenodd"/></svg>`,
 };
+
+function applyFilters() {
+  const searchTerm = searchInput.value.trim().toLowerCase();
+  const locationValue = locationFilter.value;
+
+  Array.from(tableBody.querySelectorAll('tr')).forEach(row => {
+    const company = (row.dataset.company || '').toLowerCase();
+    const role = (row.dataset.role || '').toLowerCase();
+    const notes = (row.dataset.notes || '').toLowerCase();
+    const status = row.querySelector('.status-wrapper')?.dataset.value;
+
+    const matchesSearch = !searchTerm ||
+      company.includes(searchTerm) ||
+      role.includes(searchTerm) ||
+      notes.includes(searchTerm);
+
+    const matchesLocation = locationValue === 'All' || row.dataset.workMode === locationValue;
+    const matchesStatus = currentStatusFilter === 'All' || status === currentStatusFilter;
+
+    row.style.display = (matchesSearch && matchesLocation && matchesStatus) ? '' : 'none';
+  });
+
+  updateStatusTabCounts();
+}
+
+function tabActiveClasses(status) {
+  if (status === 'All') return 'bg-slate-800 text-white';
+  return (statusStyles[status] || '').replace('bg-white', 'bg-white ring-1 ring-inset ring-slate-400');
+}
+
+function tabInactiveClasses(status) {
+  if (status === 'All') return 'bg-white text-slate-600 border border-slate-300 hover:bg-slate-50';
+  const base = statusStyles[status] || '';
+  return `${base} opacity-50 hover:opacity-100`;
+}
+
+function refreshStatusTabStyles() {
+  statusTabsContainer.querySelectorAll('.status-tab-btn').forEach(btn => {
+    const status = btn.dataset.statusFilter;
+    const isActive = status === currentStatusFilter;
+    const allPossibleClasses = ['bg-slate-800', 'text-white', 'bg-white', 'text-slate-600', 'border', 'border-slate-300', 'hover:bg-slate-50', 'opacity-50', 'hover:opacity-100', 'ring-1', 'ring-inset', 'ring-slate-400',
+      ...Object.values(statusStyles).flatMap(c => c.split(' '))];
+    btn.classList.remove(...new Set(allPossibleClasses));
+    const newClasses = (isActive ? tabActiveClasses(status) : tabInactiveClasses(status)).split(' ').filter(Boolean);
+    btn.classList.add(...newClasses);
+  });
+}
+
+function updateStatusTabCounts() {
+  const allRows = Array.from(tableBody.querySelectorAll('tr'));
+  statusTabsContainer.querySelectorAll('.status-tab-btn').forEach(btn => {
+    const status = btn.dataset.statusFilter;
+    const count = status === 'All'
+      ? allRows.length
+      : allRows.filter(row => row.querySelector('.status-wrapper')?.dataset.value === status).length;
+    btn.querySelector('.status-tab-count').textContent = count;
+  });
+}
+
+statusTabsContainer.addEventListener('click', (event) => {
+  const btn = event.target.closest('.status-tab-btn');
+  if (!btn) return;
+  currentStatusFilter = btn.dataset.statusFilter;
+  refreshStatusTabStyles();
+  applyFilters();
+});
+
+refreshStatusTabStyles();
+
+searchInput.addEventListener('input', applyFilters);
+locationFilter.addEventListener('change', applyFilters);
+
+function applySort() {
+  const field = sortSelect.value;
+  const rows = Array.from(tableBody.querySelectorAll('tr')).map(getRowData);
+
+  rows.sort((a, b) => {
+    let result;
+    if (field === 'company') {
+      result = (a.company || '').localeCompare(b.company || '');
+    } else {
+      const valA = a[field] || '';
+      const valB = b[field] || '';
+      if (!valA && !valB) result = 0;
+      else if (!valA) result = 1;
+      else if (!valB) result = -1;
+      else result = valA.localeCompare(valB);
+    }
+    return sortDirection === 'asc' ? result : -result;
+  });
+
+  renderRows(rows);
+}
+
+sortSelect.addEventListener('change', applySort);
+sortDirectionBtn.addEventListener('click', () => {
+  sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+  sortDirectionBtn.classList.toggle('rotate-180', sortDirection === 'asc');
+  applySort();
+});
 
 function initials(name) {
   return (name || '?').trim().charAt(0).toUpperCase();
@@ -162,6 +271,7 @@ function saveToStorage() {
 function renderRows(rows) {
   tableBody.innerHTML = '';
   rows.forEach(data => tableBody.appendChild(createRow(data)));
+  applyFilters();
 }
 
 function loadFromStorage() {
@@ -314,6 +424,7 @@ jobForm.addEventListener('submit', (event) => {
   }
 
   saveToStorage();
+  applyFilters();
   closeModal();
 });
 

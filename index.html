@@ -28,7 +28,7 @@
 
   <header class="sticky top-0 z-30 bg-white border-b border-slate-200">
     <div class="max-w-7xl mx-auto flex items-center justify-between gap-3 px-4 sm:px-6 py-4">
-      <h1 class="text-xl sm:text-2xl font-semibold text-slate-800">Job Tracker</h1>
+      <h1 class="text-xl sm:text-2xl font-semibold text-slate-800">Job Application Tracker</h1>
       <div class="flex items-center gap-2">
         <button id="add-row-btn" class="flex items-center gap-1.5 px-3 py-2 rounded-md bg-slate-800 text-white text-sm hover:bg-slate-700">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
@@ -42,6 +42,78 @@
   </header>
 
   <div class="max-w-7xl mx-auto p-4 sm:p-6">
+
+    <div class="bg-white rounded-xl border border-slate-200 mb-4 p-3">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        <div class="relative flex-1 max-w-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2">
+            <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
+          </svg>
+          <input id="search-input" type="text" placeholder="Search company, position, notes..." class="w-full border border-slate-200 rounded-md pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300">
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <select id="location-filter" class="border border-slate-200 rounded-md px-3 py-2 text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-300">
+            <option value="All">All Locations</option>
+            <option value="REMOTE">Remote</option>
+            <option value="HYBRID">Hybrid</option>
+            <option value="ONSITE">Onsite</option>
+          </select>
+
+          <div class="flex items-center rounded-md border border-slate-200 overflow-hidden">
+            <select id="sort-select" class="border-none px-3 py-2 text-sm text-slate-600 focus:outline-none bg-transparent">
+              <option value="date">Sort by Applied Date</option>
+              <option value="followUp">Sort by Follow-up</option>
+              <option value="company">Sort by Company</option>
+            </select>
+            <button id="sort-direction-btn" title="Toggle sort direction" class="border-l border-slate-200 p-2 text-slate-500 hover:bg-slate-50 shrink-0 transition-transform">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
+                <path fill-rule="evenodd" d="M10 3a.75.75 0 01.75.75v10.638l3.96-4.158a.75.75 0 111.08 1.04l-5.25 5.5a.75.75 0 01-1.08 0l-5.25-5.5a.75.75 0 111.08-1.04l3.96 4.158V3.75A.75.75 0 0110 3z" clip-rule="evenodd" />
+              </svg>
+            </button>
+          </div>
+
+          <div class="flex rounded-md border border-slate-200 overflow-hidden text-sm">
+            <button id="view-table-btn" type="button" class="view-toggle-btn flex items-center gap-1.5 px-3 py-2 bg-slate-100 text-slate-800 font-medium">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
+                <path fill-rule="evenodd" d="M2 4.75A2.75 2.75 0 014.75 2h10.5A2.75 2.75 0 0118 4.75v10.5A2.75 2.75 0 0115.25 18H4.75A2.75 2.75 0 012 15.25V4.75zM3.5 8v7.25c0 .69.56 1.25 1.25 1.25H7.5V8h-4zM9 8v8.5h6.25c.69 0 1.25-.56 1.25-1.25V8H9zm7.5-1.5V4.75c0-.69-.56-1.25-1.25-1.25H4.75c-.69 0-1.25.56-1.25 1.25V6.5h13z" clip-rule="evenodd" />
+              </svg>
+              Table
+            </button>
+            <button id="view-analytics-btn" type="button" class="view-toggle-btn flex items-center gap-1.5 px-3 py-2 text-slate-500 hover:bg-slate-50 border-l border-slate-200">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
+                <path d="M15.5 2A1.5 1.5 0 0014 3.5v13a1.5 1.5 0 001.5 1.5h.5a1.5 1.5 0 001.5-1.5v-13A1.5 1.5 0 0016 2h-.5zM9.5 6A1.5 1.5 0 008 7.5v9A1.5 1.5 0 009.5 18h.5a1.5 1.5 0 001.5-1.5v-9A1.5 1.5 0 0010 6h-.5zM3.5 10A1.5 1.5 0 002 11.5v5A1.5 1.5 0 003.5 18h.5A1.5 1.5 0 005.5 16.5v-5A1.5 1.5 0 004 10h-.5z" />
+              </svg>
+              Analytics
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="status-tabs" class="flex flex-wrap items-center gap-2 mt-3">
+        <button type="button" data-status-filter="All" class="status-tab-btn flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm">
+          All <span class="status-tab-count text-xs rounded-full px-1.5">0</span>
+        </button>
+        <button type="button" data-status-filter="Wishlist" class="status-tab-btn flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm">
+          Wishlist <span class="status-tab-count text-xs rounded-full px-1.5">0</span>
+        </button>
+        <button type="button" data-status-filter="Applied" class="status-tab-btn flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm">
+          Applied <span class="status-tab-count text-xs rounded-full px-1.5">0</span>
+        </button>
+        <button type="button" data-status-filter="Interviewing" class="status-tab-btn flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm">
+          Interviewing <span class="status-tab-count text-xs rounded-full px-1.5">0</span>
+        </button>
+        <button type="button" data-status-filter="Offer" class="status-tab-btn flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm">
+          Offers <span class="status-tab-count text-xs rounded-full px-1.5">0</span>
+        </button>
+        <button type="button" data-status-filter="Rejected" class="status-tab-btn flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm">
+          Rejected <span class="status-tab-count text-xs rounded-full px-1.5">0</span>
+        </button>
+        <button type="button" data-status-filter="Ghosted" class="status-tab-btn flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm">
+          Ghosted <span class="status-tab-count text-xs rounded-full px-1.5">0</span>
+        </button>
+      </div>
+    </div>
 
     <div class="bg-white rounded-lg border border-slate-200 overflow-x-auto table-scroll">
       <table class="w-full text-xs text-left">

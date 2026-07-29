@@ -52,25 +52,27 @@
           <input id="search-input" type="text" placeholder="Search company, position, notes..." class="w-full border border-slate-200 rounded-md pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300">
         </div>
 
-        <div class="flex flex-wrap items-center gap-2">
-          <select id="location-filter" class="border border-slate-200 rounded-md px-3 py-2 text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-300">
-            <option value="All">All Locations</option>
-            <option value="REMOTE">Remote</option>
-            <option value="HYBRID">Hybrid</option>
-            <option value="ONSITE">Onsite</option>
-          </select>
-
-          <div class="flex items-center rounded-md border border-slate-200 overflow-hidden">
-            <select id="sort-select" class="border-none px-3 py-2 text-sm text-slate-600 focus:outline-none bg-transparent">
-              <option value="date">Sort by Applied Date</option>
-              <option value="followUp">Sort by Follow-up</option>
-              <option value="company">Sort by Company</option>
+        <div class="flex flex-col gap-2 lg:flex-row lg:items-center lg:gap-2">
+          <div class="grid grid-cols-2 gap-2 lg:flex lg:gap-2">
+            <select id="location-filter" class="border border-slate-200 rounded-md px-3 py-2 text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-300">
+              <option value="All">All Locations</option>
+              <option value="REMOTE">Remote</option>
+              <option value="HYBRID">Hybrid</option>
+              <option value="ONSITE">Onsite</option>
             </select>
-            <button id="sort-direction-btn" title="Toggle sort direction" class="border-l border-slate-200 p-2 text-slate-500 hover:bg-slate-50 shrink-0 transition-transform">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
-                <path fill-rule="evenodd" d="M10 3a.75.75 0 01.75.75v10.638l3.96-4.158a.75.75 0 111.08 1.04l-5.25 5.5a.75.75 0 01-1.08 0l-5.25-5.5a.75.75 0 111.08-1.04l3.96 4.158V3.75A.75.75 0 0110 3z" clip-rule="evenodd" />
-              </svg>
-            </button>
+
+            <div class="flex items-center rounded-md border border-slate-200 overflow-hidden">
+              <select id="sort-select" class="border-none px-3 py-2 text-sm text-slate-600 focus:outline-none bg-transparent w-full">
+                <option value="date">Sort by Applied Date</option>
+                <option value="followUp">Sort by Follow-up</option>
+                <option value="company">Sort by Company</option>
+              </select>
+              <button id="sort-direction-btn" title="Toggle sort direction" class="border-l border-slate-200 p-2 text-slate-500 hover:bg-slate-50 shrink-0 transition-transform">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
+                  <path fill-rule="evenodd" d="M10 3a.75.75 0 01.75.75v10.638l3.96-4.158a.75.75 0 111.08 1.04l-5.25 5.5a.75.75 0 01-1.08 0l-5.25-5.5a.75.75 0 111.08-1.04l3.96 4.158V3.75A.75.75 0 0110 3z" clip-rule="evenodd" />
+                </svg>
+              </button>
+            </div>
           </div>
 
           <div class="flex rounded-md border border-slate-200 overflow-hidden text-sm">

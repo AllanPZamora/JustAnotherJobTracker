@@ -31,6 +31,7 @@ const deleteConfirmBtn = document.getElementById('delete-confirm-btn');
 const notesModal = document.getElementById('notes-modal');
 const notesModalTitle = document.getElementById('notes-modal-title');
 const notesModalSubtitle = document.getElementById('notes-modal-subtitle');
+const notesModalSalary = document.getElementById('notes-modal-salary');
 const notesModalBody = document.getElementById('notes-modal-body');
 const notesCloseBtn = document.getElementById('notes-close-btn');
 
@@ -42,6 +43,11 @@ let sortDirection = 'desc';
 
 const statusTabsContainer = document.getElementById('status-tabs');
 let currentStatusFilter = 'All';
+
+const viewTableBtn = document.getElementById('view-table-btn');
+const viewAnalyticsBtn = document.getElementById('view-analytics-btn');
+const tableView = document.getElementById('table-view');
+const analyticsView = document.getElementById('analytics-view');
 
 const statusStyles = {
   Wishlist:     'bg-white text-slate-600 border border-slate-300',
@@ -168,6 +174,42 @@ sortDirectionBtn.addEventListener('click', () => {
   applySort();
 });
 
+function todayISO() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+const terminalStatuses = ['Offer', 'Rejected', 'Ghosted'];
+
+function buildFollowUpHtml(status, followUpValue) {
+  if (terminalStatuses.includes(status)) {
+    return '<span class="text-slate-400 italic">Closed</span>';
+  }
+  return `
+    <span class="hidden sm:inline">${followUpValue || '—'}</span>
+    <span class="sm:hidden">${followUpValue ? shortDate(followUpValue) : '—'}</span>
+  `;
+}
+
+function switchView(view) {
+  const isTable = view === 'table';
+
+  tableView.classList.toggle('hidden', !isTable);
+  analyticsView.classList.toggle('hidden', isTable);
+
+  viewTableBtn.classList.toggle('bg-slate-100', isTable);
+  viewTableBtn.classList.toggle('text-slate-800', isTable);
+  viewTableBtn.classList.toggle('font-medium', isTable);
+  viewTableBtn.classList.toggle('text-slate-500', !isTable);
+
+  viewAnalyticsBtn.classList.toggle('bg-slate-100', !isTable);
+  viewAnalyticsBtn.classList.toggle('text-slate-800', !isTable);
+  viewAnalyticsBtn.classList.toggle('font-medium', !isTable);
+  viewAnalyticsBtn.classList.toggle('text-slate-500', isTable);
+}
+
+viewTableBtn.addEventListener('click', () => switchView('table'));
+viewAnalyticsBtn.addEventListener('click', () => switchView('analytics'));
+
 function initials(name) {
   return (name || '?').trim().charAt(0).toUpperCase();
 }
@@ -216,18 +258,16 @@ function createRow(data = {}) {
       <div class="cell-truncate text-slate-700">${data.location || '—'}</div>
       ${data.workMode ? `<span class="inline-flex items-center gap-1 mt-1 text-[10px] font-medium uppercase tracking-wide text-slate-500 bg-slate-100 border border-slate-200 rounded px-1.5 py-0.5">${icons.pin}${data.workMode}</span>` : ''}
     </td>
-    <td class="px-4 py-3 cell-truncate">${data.salary || '—'}</td>
     <td class="px-4 py-3 cell-truncate">
       <span class="hidden sm:inline">${data.date || '—'}</span>
       <span class="sm:hidden">${data.date ? shortDate(data.date) : '—'}</span>
     </td>
-    <td class="px-4 py-3 cell-truncate">
-      <span class="hidden sm:inline">${data.followUp || '—'}</span>
-      <span class="sm:hidden">${data.followUp ? shortDate(data.followUp) : '—'}</span>
+    <td class="px-4 py-3 cell-truncate followup-cell">
+      ${buildFollowUpHtml(status, data.followUp)}
     </td>
     <td class="px-4 py-3">
       <div class="flex items-center gap-2 text-slate-400">
-        <button class="view-notes-btn hover:text-slate-700" title="View notes">${icons.eye}</button>
+        <button class="view-notes-btn hover:text-slate-700" title="View details">${icons.eye}</button>
         <button class="link-btn hover:text-slate-700" title="Open job link">${icons.link}</button>
         <button class="edit-row-btn hover:text-slate-700" title="Edit">${icons.edit}</button>
         <button class="delete-row-btn hover:text-red-500" title="Delete">${icons.trash}</button>
@@ -245,10 +285,22 @@ function createRow(data = {}) {
   row.dataset.date = data.date || '';
   row.dataset.followUp = data.followUp || '';
 
+  const history = data.history && data.history.length
+    ? data.history
+    : [{ status, date: data.date || todayISO() }];
+  row.dataset.history = JSON.stringify(history);
+
   return row;
 }
 
 function getRowData(row) {
+  let history = [];
+  try {
+    history = JSON.parse(row.dataset.history || '[]');
+  } catch (e) {
+    history = [];
+  }
+
   return {
     company: row.dataset.company || '',
     role: row.dataset.role || '',
@@ -260,6 +312,7 @@ function getRowData(row) {
     followUp: row.dataset.followUp || '',
     link: row.dataset.link || '',
     notes: row.dataset.notes || '',
+    history: history,
   };
 }
 
@@ -291,10 +344,12 @@ function loadFromStorage() {
 function openNotesModal(row) {
   const role = row?.dataset.role || 'Untitled role';
   const company = row?.dataset.company || '';
+  const salary = row?.dataset.salary || '';
   const notes = row?.dataset.notes || '';
 
   notesModalTitle.textContent = role;
   notesModalSubtitle.textContent = company;
+  notesModalSalary.textContent = salary || 'Not specified';
   notesModalBody.textContent = notes || 'No notes added yet.';
 
   notesModal.classList.remove('hidden');
@@ -402,10 +457,23 @@ document.addEventListener('keydown', (event) => {
 jobForm.addEventListener('submit', (event) => {
   event.preventDefault();
 
+  const newStatus = fieldStatus.value;
+  let history = [];
+
+  if (editingRow) {
+    const previous = getRowData(editingRow);
+    history = previous.history || [];
+    if (previous.status !== newStatus) {
+      history = [...history, { status: newStatus, date: todayISO() }];
+    }
+  } else {
+    history = [{ status: newStatus, date: fieldDate.value || todayISO() }];
+  }
+
   const data = {
     company: fieldCompany.value.trim(),
     role: fieldRole.value.trim(),
-    status: fieldStatus.value,
+    status: newStatus,
     salary: fieldSalary.value.trim(),
     workMode: selectedWorkMode,
     location: fieldLocation.value.trim(),
@@ -413,6 +481,7 @@ jobForm.addEventListener('submit', (event) => {
     followUp: fieldFollowup.value,
     link: fieldLink.value.trim(),
     notes: fieldNotes.value.trim(),
+    history: history,
   };
 
   const newRow = createRow(data);
@@ -508,12 +577,30 @@ tableBody.addEventListener('click', (event) => {
 
   if (option) {
     const wrapper = option.closest('.status-wrapper');
+    const row = wrapper.closest('tr');
+    const previousStatus = wrapper.dataset.value;
     const newStatus = option.dataset.value;
     const trigger = wrapper.querySelector('.status-trigger');
     const label = wrapper.querySelector('.status-label');
 
     wrapper.dataset.value = newStatus;
     label.textContent = newStatus;
+
+    if (newStatus !== previousStatus) {
+      let history = [];
+      try {
+        history = JSON.parse(row.dataset.history || '[]');
+      } catch (e) {
+        history = [];
+      }
+      history.push({ status: newStatus, date: todayISO() });
+      row.dataset.history = JSON.stringify(history);
+    }
+
+    const followUpCell = row.querySelector('.followup-cell');
+    if (followUpCell) {
+      followUpCell.innerHTML = buildFollowUpHtml(newStatus, row.dataset.followUp);
+    }
 
     const allStatusClasses = Object.values(statusStyles).flatMap(c => c.split(' '));
     trigger.classList.remove(...allStatusClasses);

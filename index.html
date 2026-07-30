@@ -6,6 +6,7 @@
     <link href="src/output.css" rel="stylesheet">
     <title>Just Another Job Tracker</title>
     <link rel="icon" type="image/svg+xml" href="src/img/list.svg">
+    <script src="https://cdn.plot.ly/plotly-3.6.0.min.js" charset="utf-8"></script>
 
     <style>
       table { table-layout: fixed; min-width: 900px; }
@@ -29,6 +30,12 @@
     <div class="max-w-7xl mx-auto flex items-center justify-between gap-3 px-4 sm:px-6 py-4">
       <h1 class="text-xl sm:text-2xl font-semibold text-slate-800">Job Application Tracker</h1>
       <div class="flex items-center gap-2">
+        <button id="reset-data-btn" class="flex items-center gap-1.5 px-3 py-2 rounded-md border border-slate-200 text-slate-500 text-sm hover:bg-slate-50">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
+            <path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H3.989a.75.75 0 00-.75.75v4.242a.75.75 0 001.5 0v-2.43l.31.31a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.23-3.723a.75.75 0 00.219-.53V2.929a.75.75 0 00-1.5 0V5.36l-.31-.31A7 7 0 002.239 8.188a.75.75 0 101.448.389A5.5 5.5 0 0112.9 6.11l.311.31h-2.432a.75.75 0 000 1.5h4.243a.75.75 0 00.53-.219z" clip-rule="evenodd" />
+          </svg>
+          Reset
+        </button>
         <button id="add-row-btn" class="flex items-center gap-1.5 px-3 py-2 rounded-md bg-slate-800 text-white text-sm hover:bg-slate-700">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
             <path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
@@ -137,8 +144,8 @@
     </div>
 
     <div id="analytics-view" class="hidden">
-      <div class="bg-white rounded-lg border border-slate-200 p-10 text-center text-slate-400 text-sm">
-        Analytics view coming soon.
+      <div class="bg-white rounded-lg border border-slate-200 p-4">
+        <div id="sankey-chart"></div>
       </div>
     </div>
 
@@ -264,6 +271,27 @@
       <div class="mt-4">
         <div class="text-xs font-semibold text-slate-500 uppercase mb-1">Notes &amp; Interview Logs</div>
         <p id="notes-modal-body" class="text-sm text-slate-600 whitespace-pre-wrap"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reset Data Confirmation Modal -->
+  <div id="reset-modal" class="hidden fixed inset-0 bg-slate-900/40 items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-sm p-6">
+      <div class="flex items-start gap-3">
+        <div class="w-10 h-10 shrink-0 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
+            <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.63-1.516 2.63H3.72c-1.347 0-2.189-1.463-1.515-2.63L8.485 2.495zM10 6a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 6zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="min-w-0">
+          <h2 class="text-base font-semibold text-slate-800">Reset all data?</h2>
+          <p class="text-sm text-slate-500 mt-1">This permanently deletes every saved job application and restores the sample data. This can't be undone.</p>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 mt-6">
+        <button type="button" id="reset-cancel-btn" class="px-4 py-2 rounded-md text-sm text-slate-600 hover:bg-slate-100">Cancel</button>
+        <button type="button" id="reset-confirm-btn" class="px-4 py-2 rounded-md text-sm bg-rose-600 text-white hover:bg-rose-700">Reset Data</button>
       </div>
     </div>
   </div>

@@ -49,6 +49,37 @@ const viewAnalyticsBtn = document.getElementById('view-analytics-btn');
 const tableView = document.getElementById('table-view');
 const analyticsView = document.getElementById('analytics-view');
 
+const resetDataBtn = document.getElementById('reset-data-btn');
+const resetModal = document.getElementById('reset-modal');
+const resetCancelBtn = document.getElementById('reset-cancel-btn');
+const resetConfirmBtn = document.getElementById('reset-confirm-btn');
+
+function openResetModal() {
+  resetModal.classList.remove('hidden');
+  resetModal.classList.add('flex');
+}
+
+function closeResetModal() {
+  resetModal.classList.add('hidden');
+  resetModal.classList.remove('flex');
+}
+
+resetDataBtn.addEventListener('click', openResetModal);
+resetCancelBtn.addEventListener('click', closeResetModal);
+resetModal.addEventListener('click', (event) => {
+  if (event.target === resetModal) closeResetModal();
+});
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && !resetModal.classList.contains('hidden')) closeResetModal();
+});
+resetConfirmBtn.addEventListener('click', () => {
+  localStorage.removeItem(STORAGE_KEY);
+  loadFromStorage();
+  currentStatusFilter = 'All';
+  refreshStatusTabStyles();
+  closeResetModal();
+});
+
 const statusStyles = {
   Wishlist:     'bg-white text-slate-600 border border-slate-300',
   Applied:      'bg-blue-100 text-blue-700',
@@ -61,9 +92,42 @@ const statusOptions = Object.keys(statusStyles);
 fieldStatus.innerHTML = statusOptions.map(opt => `<option value="${opt}">${opt}</option>`).join('');
 
 const defaultRows = [
-  { company: 'Datadog', role: 'Full Stack Engineer', status: 'Wishlist', salary: '$160,000 - $180,000', location: 'Boston, MA', workMode: 'ONSITE', date: '2026-07-24', followUp: '', link: '' },
-  { company: 'Figma', role: 'Product Engineer', status: 'Applied', salary: '$175,000 - $195,000', location: 'New York, NY', workMode: 'HYBRID', date: '2026-07-20', followUp: '2026-08-03', link: '' },
-  { company: 'Stripe', role: 'Senior Frontend Engineer', status: 'Interviewing', salary: '$180,000 - $210,000', location: 'San Francisco, CA', workMode: 'HYBRID', date: '2026-07-10', followUp: '2026-08-01', link: '' },
+  {
+    company: 'Company Name Here',
+    role: 'Position Name Here',
+    status: 'Wishlist',
+    salary: 'Salary Range Here',
+    location: 'City, State',
+    workMode: 'ONSITE',
+    date: '2026-01-01',
+    followUp: '',
+    link: '',
+    notes: 'This is the notes section — click the eye icon on any row to see it. You can jot down salary details, interview prep, recruiter conversations, or anything else you want to remember about this application.',
+  },
+  {
+    company: 'Company Name Here',
+    role: 'Position Name Here',
+    status: 'Applied',
+    salary: 'Salary Range Here',
+    location: 'City, State',
+    workMode: 'HYBRID',
+    date: '2026-01-05',
+    followUp: '2026-01-20',
+    link: '',
+    notes: 'This is the notes section — click the eye icon on any row to see it. You can jot down salary details, interview prep, recruiter conversations, or anything else you want to remember about this application.',
+  },
+  {
+    company: 'Company Name Here',
+    role: 'Position Name Here',
+    status: 'Interviewing',
+    salary: 'Salary Range Here',
+    location: 'City, State',
+    workMode: 'REMOTE',
+    date: '2026-01-10',
+    followUp: '2026-01-25',
+    link: '',
+    notes: 'This is the notes section — click the eye icon on any row to see it. You can jot down salary details, interview prep, recruiter conversations, or anything else you want to remember about this application.',
+  },
 ];
 
 const icons = {
@@ -207,8 +271,106 @@ function switchView(view) {
   viewAnalyticsBtn.classList.toggle('text-slate-500', isTable);
 }
 
+const sankeyNodeColors = {
+  Applications: '#64748b',
+  Wishlist:     '#cbd5e1',
+  Applied:      '#3b82f6',
+  Interviewing: '#f59e0b',
+  Offer:        '#10b981',
+  Rejected:     '#f43f5e',
+  Ghosted:      '#9ca3af',
+};
+
+function renderSankeyChart() {
+  const { nodeLabels, links } = buildSankeyFlowData();
+  const container = document.getElementById('sankey-chart');
+
+  if (links.length === 0) {
+    container.innerHTML = '<p class="text-center text-slate-400 text-sm py-10">Not enough status changes yet to show a funnel. Update a few job statuses to see this fill in.</p>';
+    return;
+  }
+
+  const labelIndex = Object.fromEntries(nodeLabels.map((label, i) => [label, i]));
+
+  const data = [{
+    type: 'sankey',
+    orientation: 'h',
+    node: {
+      label: nodeLabels,
+      color: nodeLabels.map(label => sankeyNodeColors[label] || '#94a3b8'),
+      pad: 16,
+      thickness: 18,
+      line: { color: '#ffffff', width: 1 },
+    },
+    link: {
+      source: links.map(l => labelIndex[l.source]),
+      target: links.map(l => labelIndex[l.target]),
+      value: links.map(l => l.value),
+      color: links.map(l => (sankeyNodeColors[l.target] || '#94a3b8') + '55'),
+    },
+  }];
+
+  const layout = {
+    font: { size: 12, family: 'inherit' },
+    margin: { l: 10, r: 10, t: 10, b: 10 },
+    height: 420,
+  };
+
+  Plotly.newPlot('sankey-chart', data, layout, { responsive: true, displayModeBar: false });
+}
+
 viewTableBtn.addEventListener('click', () => switchView('table'));
-viewAnalyticsBtn.addEventListener('click', () => switchView('analytics'));
+viewAnalyticsBtn.addEventListener('click', () => {
+  switchView('analytics');
+  renderSankeyChart();
+});
+
+function getAllJobsData() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (!saved) return defaultRows;
+  try {
+    return JSON.parse(saved);
+  } catch (e) {
+    return defaultRows;
+  }
+}
+
+function buildSankeyFlowData() {
+  const jobs = getAllJobsData();
+  const flowCounts = {}; // key: "source→target", value: count
+
+  jobs.forEach(job => {
+    let history = job.history;
+    if (!Array.isArray(history) || history.length === 0) {
+      history = [{ status: job.status || 'Applied', date: job.date || todayISO() }];
+    }
+
+    // Edge from the starting point into the job's first recorded stage
+    addFlow('Applications', history[0].status);
+
+    // Edges between each consecutive stage change
+    for (let i = 0; i < history.length - 1; i++) {
+      addFlow(history[i].status, history[i + 1].status);
+    }
+  });
+
+  function addFlow(source, target) {
+    if (source === target) return; // skip no-op transitions
+    const key = `${source}→${target}`;
+    flowCounts[key] = (flowCounts[key] || 0) + 1;
+  }
+
+  const links = Object.entries(flowCounts).map(([key, value]) => {
+    const [source, target] = key.split('→');
+    return { source, target, value };
+  });
+
+  const nodeLabels = Array.from(
+    new Set(links.flatMap(link => [link.source, link.target]))
+  );
+
+  return { nodeLabels, links };
+}
 
 function initials(name) {
   return (name || '?').trim().charAt(0).toUpperCase();

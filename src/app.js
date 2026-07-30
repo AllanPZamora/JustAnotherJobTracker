@@ -322,6 +322,7 @@ function renderSankeyChart() {
 viewTableBtn.addEventListener('click', () => switchView('table'));
 viewAnalyticsBtn.addEventListener('click', () => {
   switchView('analytics');
+  renderStatCards();
   renderSankeyChart();
 });
 
@@ -370,6 +371,38 @@ function buildSankeyFlowData() {
   );
 
   return { nodeLabels, links };
+}
+
+function computeStats() {
+  const jobs = getAllJobsData();
+  const appliedJobs = jobs.filter(job => job.status !== 'Wishlist');
+  const total = appliedJobs.length;
+
+  const hasReachedStage = (job, stages) => {
+    if (stages.includes(job.status)) return true;
+    return Array.isArray(job.history) && job.history.some(h => stages.includes(h.status));
+  };
+
+  const responded = appliedJobs.filter(job => hasReachedStage(job, ['Interviewing', 'Offer', 'Rejected'])).length;
+  const interviewed = appliedJobs.filter(job => hasReachedStage(job, ['Interviewing', 'Offer'])).length;
+  const offered = appliedJobs.filter(job => hasReachedStage(job, ['Offer'])).length;
+
+  const pct = (count) => total === 0 ? '—' : `${Math.round((count / total) * 100)}%`;
+
+  return {
+    total,
+    responseRate: pct(responded),
+    interviewRate: pct(interviewed),
+    offerRate: pct(offered),
+  };
+}
+
+function renderStatCards() {
+  const stats = computeStats();
+  document.getElementById('stat-total').textContent = stats.total;
+  document.getElementById('stat-response-rate').textContent = stats.responseRate;
+  document.getElementById('stat-interview-rate').textContent = stats.interviewRate;
+  document.getElementById('stat-offer-rate').textContent = stats.offerRate;
 }
 
 function initials(name) {

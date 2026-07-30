@@ -281,6 +281,46 @@ const sankeyNodeColors = {
   Ghosted:      '#9ca3af',
 };
 
+function renderStatusPieChart() {
+  const jobs = getAllJobsData();
+  const container = document.getElementById('status-pie-chart');
+
+  if (jobs.length === 0) {
+    container.innerHTML = '<p class="text-center text-slate-400 text-sm py-10">No jobs tracked yet.</p>';
+    return;
+  }
+
+  const counts = {};
+  jobs.forEach(job => {
+    const status = job.status || 'Applied';
+    counts[status] = (counts[status] || 0) + 1;
+  });
+
+  const labels = Object.keys(counts);
+  const values = labels.map(label => counts[label]);
+  const colors = labels.map(label => sankeyNodeColors[label] || '#94a3b8');
+
+  const data = [{
+    type: 'pie',
+    labels: labels,
+    values: values,
+    marker: { colors: colors, line: { color: '#ffffff', width: 2 } },
+    textinfo: 'label+value',
+    hoverinfo: 'label+value+percent',
+    hole: 0.45,
+  }];
+
+  const layout = {
+    font: { size: 12, family: 'inherit' },
+    margin: { l: 10, r: 10, t: 10, b: 10 },
+    height: 320,
+    showlegend: true,
+    legend: { orientation: 'h', y: -0.1 },
+  };
+
+  Plotly.newPlot('status-pie-chart', data, layout, { responsive: true, displayModeBar: false });
+}
+
 function renderSankeyChart() {
   const { nodeLabels, links } = buildSankeyFlowData();
   const container = document.getElementById('sankey-chart');
@@ -323,6 +363,7 @@ viewTableBtn.addEventListener('click', () => switchView('table'));
 viewAnalyticsBtn.addEventListener('click', () => {
   switchView('analytics');
   renderStatCards();
+  renderStatusPieChart();
   renderSankeyChart();
 });
 

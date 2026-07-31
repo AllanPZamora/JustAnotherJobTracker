@@ -54,6 +54,54 @@ const resetModal = document.getElementById('reset-modal');
 const resetCancelBtn = document.getElementById('reset-cancel-btn');
 const resetConfirmBtn = document.getElementById('reset-confirm-btn');
 
+const exportDataBtn = document.getElementById('export-data-btn');
+const importDataBtn = document.getElementById('import-data-btn');
+const importFileInput = document.getElementById('import-file-input');
+
+exportDataBtn.addEventListener('click', () => {
+  const dataStr = localStorage.getItem(STORAGE_KEY) || JSON.stringify(defaultRows);
+  const blob = new Blob([dataStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement('a');
+  link.href = url;
+  const dateStamp = new Date().toISOString().slice(0, 10);
+  link.download = `job-tracker-export-${dateStamp}.json`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+});
+
+importDataBtn.addEventListener('click', () => {
+  importFileInput.click();
+});
+
+importFileInput.addEventListener('change', (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(reader.result);
+      if (!Array.isArray(parsed)) {
+        throw new Error('File does not contain a list of job entries.');
+      }
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+      loadFromStorage();
+      currentStatusFilter = 'All';
+      refreshStatusTabStyles();
+      alert(`Imported ${parsed.length} job entr${parsed.length === 1 ? 'y' : 'ies'} successfully.`);
+    } catch (err) {
+      alert('This file could not be imported. Make sure it\'s a valid export from this tracker.');
+    }
+    importFileInput.value = '';
+  };
+  reader.readAsText(file);
+});
+
 function openResetModal() {
   resetModal.classList.remove('hidden');
   resetModal.classList.add('flex');
@@ -300,22 +348,24 @@ function renderStatusPieChart() {
   const values = labels.map(label => counts[label]);
   const colors = labels.map(label => sankeyNodeColors[label] || '#94a3b8');
 
+  const isMobile = window.innerWidth < 640;
+
   const data = [{
     type: 'pie',
     labels: labels,
     values: values,
     marker: { colors: colors, line: { color: '#ffffff', width: 2 } },
-    textinfo: 'label+value',
+    textinfo: isMobile ? 'value' : 'label+value',
     hoverinfo: 'label+value+percent',
-    hole: 0.45,
+    hole: 0.5,
   }];
 
   const layout = {
-    font: { size: 12, family: 'inherit' },
+    font: { size: isMobile ? 10 : 12, family: 'inherit' },
     margin: { l: 10, r: 10, t: 10, b: 10 },
-    height: 320,
+    height: isMobile ? 220 : 280,
     showlegend: true,
-    legend: { orientation: 'h', y: -0.1 },
+    legend: { orientation: 'h', y: -0.15, font: { size: isMobile ? 9 : 11 } },
   };
 
   Plotly.newPlot('status-pie-chart', data, layout, { responsive: true, displayModeBar: false });
@@ -331,6 +381,7 @@ function renderSankeyChart() {
   }
 
   const labelIndex = Object.fromEntries(nodeLabels.map((label, i) => [label, i]));
+  const isMobile = window.innerWidth < 640;
 
   const data = [{
     type: 'sankey',
@@ -338,8 +389,8 @@ function renderSankeyChart() {
     node: {
       label: nodeLabels,
       color: nodeLabels.map(label => sankeyNodeColors[label] || '#94a3b8'),
-      pad: 16,
-      thickness: 18,
+      pad: isMobile ? 6 : 8,
+      thickness: isMobile ? 8 : 10,
       line: { color: '#ffffff', width: 1 },
     },
     link: {
@@ -351,9 +402,9 @@ function renderSankeyChart() {
   }];
 
   const layout = {
-    font: { size: 12, family: 'inherit' },
+    font: { size: isMobile ? 9 : 11, family: 'inherit' },
     margin: { l: 10, r: 10, t: 10, b: 10 },
-    height: 420,
+    height: isMobile ? 200 : 260,
   };
 
   Plotly.newPlot('sankey-chart', data, layout, { responsive: true, displayModeBar: false });

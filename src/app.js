@@ -31,6 +31,7 @@ const deleteConfirmBtn = document.getElementById('delete-confirm-btn');
 const notesModal = document.getElementById('notes-modal');
 const notesModalTitle = document.getElementById('notes-modal-title');
 const notesModalSubtitle = document.getElementById('notes-modal-subtitle');
+const notesModalSalary = document.getElementById('notes-modal-salary');
 const notesModalBody = document.getElementById('notes-modal-body');
 const notesCloseBtn = document.getElementById('notes-close-btn');
 
@@ -42,6 +43,90 @@ let sortDirection = 'desc';
 
 const statusTabsContainer = document.getElementById('status-tabs');
 let currentStatusFilter = 'All';
+
+const viewTableBtn = document.getElementById('view-table-btn');
+const viewAnalyticsBtn = document.getElementById('view-analytics-btn');
+const tableView = document.getElementById('table-view');
+const analyticsView = document.getElementById('analytics-view');
+
+const resetDataBtn = document.getElementById('reset-data-btn');
+const resetModal = document.getElementById('reset-modal');
+const resetCancelBtn = document.getElementById('reset-cancel-btn');
+const resetConfirmBtn = document.getElementById('reset-confirm-btn');
+
+const exportDataBtn = document.getElementById('export-data-btn');
+const importDataBtn = document.getElementById('import-data-btn');
+const importFileInput = document.getElementById('import-file-input');
+
+exportDataBtn.addEventListener('click', () => {
+  const dataStr = localStorage.getItem(STORAGE_KEY) || JSON.stringify(defaultRows);
+  const blob = new Blob([dataStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement('a');
+  link.href = url;
+  const dateStamp = new Date().toISOString().slice(0, 10);
+  link.download = `job-tracker-export-${dateStamp}.json`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+});
+
+importDataBtn.addEventListener('click', () => {
+  importFileInput.click();
+});
+
+importFileInput.addEventListener('change', (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(reader.result);
+      if (!Array.isArray(parsed)) {
+        throw new Error('File does not contain a list of job entries.');
+      }
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+      loadFromStorage();
+      currentStatusFilter = 'All';
+      refreshStatusTabStyles();
+      alert(`Imported ${parsed.length} job entr${parsed.length === 1 ? 'y' : 'ies'} successfully.`);
+    } catch (err) {
+      alert('This file could not be imported. Make sure it\'s a valid export from this tracker.');
+    }
+    importFileInput.value = '';
+  };
+  reader.readAsText(file);
+});
+
+function openResetModal() {
+  resetModal.classList.remove('hidden');
+  resetModal.classList.add('flex');
+}
+
+function closeResetModal() {
+  resetModal.classList.add('hidden');
+  resetModal.classList.remove('flex');
+}
+
+resetDataBtn.addEventListener('click', openResetModal);
+resetCancelBtn.addEventListener('click', closeResetModal);
+resetModal.addEventListener('click', (event) => {
+  if (event.target === resetModal) closeResetModal();
+});
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && !resetModal.classList.contains('hidden')) closeResetModal();
+});
+resetConfirmBtn.addEventListener('click', () => {
+  localStorage.removeItem(STORAGE_KEY);
+  loadFromStorage();
+  currentStatusFilter = 'All';
+  refreshStatusTabStyles();
+  closeResetModal();
+});
 
 const statusStyles = {
   Wishlist:     'bg-white text-slate-600 border border-slate-300',
@@ -55,9 +140,42 @@ const statusOptions = Object.keys(statusStyles);
 fieldStatus.innerHTML = statusOptions.map(opt => `<option value="${opt}">${opt}</option>`).join('');
 
 const defaultRows = [
-  { company: 'Datadog', role: 'Full Stack Engineer', status: 'Wishlist', salary: '$160,000 - $180,000', location: 'Boston, MA', workMode: 'ONSITE', date: '2026-07-24', followUp: '', link: '' },
-  { company: 'Figma', role: 'Product Engineer', status: 'Applied', salary: '$175,000 - $195,000', location: 'New York, NY', workMode: 'HYBRID', date: '2026-07-20', followUp: '2026-08-03', link: '' },
-  { company: 'Stripe', role: 'Senior Frontend Engineer', status: 'Interviewing', salary: '$180,000 - $210,000', location: 'San Francisco, CA', workMode: 'HYBRID', date: '2026-07-10', followUp: '2026-08-01', link: '' },
+  {
+    company: 'Company Name Here',
+    role: 'Position Name Here',
+    status: 'Wishlist',
+    salary: 'Salary Range Here',
+    location: 'City, State',
+    workMode: 'ONSITE',
+    date: '2026-01-01',
+    followUp: '',
+    link: '',
+    notes: 'This is the notes section — click the eye icon on any row to see it. You can jot down salary details, interview prep, recruiter conversations, or anything else you want to remember about this application.',
+  },
+  {
+    company: 'Company Name Here',
+    role: 'Position Name Here',
+    status: 'Applied',
+    salary: 'Salary Range Here',
+    location: 'City, State',
+    workMode: 'HYBRID',
+    date: '2026-01-05',
+    followUp: '2026-01-20',
+    link: '',
+    notes: 'This is the notes section — click the eye icon on any row to see it. You can jot down salary details, interview prep, recruiter conversations, or anything else you want to remember about this application.',
+  },
+  {
+    company: 'Company Name Here',
+    role: 'Position Name Here',
+    status: 'Interviewing',
+    salary: 'Salary Range Here',
+    location: 'City, State',
+    workMode: 'REMOTE',
+    date: '2026-01-10',
+    followUp: '2026-01-25',
+    link: '',
+    notes: 'This is the notes section — click the eye icon on any row to see it. You can jot down salary details, interview prep, recruiter conversations, or anything else you want to remember about this application.',
+  },
 ];
 
 const icons = {
@@ -168,6 +286,217 @@ sortDirectionBtn.addEventListener('click', () => {
   applySort();
 });
 
+function todayISO() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+const terminalStatuses = ['Offer', 'Rejected', 'Ghosted'];
+
+function buildFollowUpHtml(status, followUpValue) {
+  if (terminalStatuses.includes(status)) {
+    return '<span class="text-slate-400 italic">Closed</span>';
+  }
+  return `
+    <span class="hidden sm:inline">${followUpValue || '—'}</span>
+    <span class="sm:hidden">${followUpValue ? shortDate(followUpValue) : '—'}</span>
+  `;
+}
+
+function switchView(view) {
+  const isTable = view === 'table';
+
+  tableView.classList.toggle('hidden', !isTable);
+  analyticsView.classList.toggle('hidden', isTable);
+
+  viewTableBtn.classList.toggle('bg-slate-100', isTable);
+  viewTableBtn.classList.toggle('text-slate-800', isTable);
+  viewTableBtn.classList.toggle('font-medium', isTable);
+  viewTableBtn.classList.toggle('text-slate-500', !isTable);
+
+  viewAnalyticsBtn.classList.toggle('bg-slate-100', !isTable);
+  viewAnalyticsBtn.classList.toggle('text-slate-800', !isTable);
+  viewAnalyticsBtn.classList.toggle('font-medium', !isTable);
+  viewAnalyticsBtn.classList.toggle('text-slate-500', isTable);
+}
+
+const sankeyNodeColors = {
+  Applications: '#64748b',
+  Wishlist:     '#cbd5e1',
+  Applied:      '#3b82f6',
+  Interviewing: '#f59e0b',
+  Offer:        '#10b981',
+  Rejected:     '#f43f5e',
+  Ghosted:      '#9ca3af',
+};
+
+function renderStatusPieChart() {
+  const jobs = getAllJobsData();
+  const container = document.getElementById('status-pie-chart');
+
+  if (jobs.length === 0) {
+    container.innerHTML = '<p class="text-center text-slate-400 text-sm py-10">No jobs tracked yet.</p>';
+    return;
+  }
+
+  const counts = {};
+  jobs.forEach(job => {
+    const status = job.status || 'Applied';
+    counts[status] = (counts[status] || 0) + 1;
+  });
+
+  const labels = Object.keys(counts);
+  const values = labels.map(label => counts[label]);
+  const colors = labels.map(label => sankeyNodeColors[label] || '#94a3b8');
+
+  const isMobile = window.innerWidth < 640;
+
+  const data = [{
+    type: 'pie',
+    labels: labels,
+    values: values,
+    marker: { colors: colors, line: { color: '#ffffff', width: 2 } },
+    textinfo: isMobile ? 'value' : 'label+value',
+    hoverinfo: 'label+value+percent',
+    hole: 0.5,
+  }];
+
+  const layout = {
+    font: { size: isMobile ? 10 : 12, family: 'inherit' },
+    margin: { l: 10, r: 10, t: 10, b: 10 },
+    height: isMobile ? 220 : 280,
+    showlegend: true,
+    legend: { orientation: 'h', y: -0.15, font: { size: isMobile ? 9 : 11 } },
+  };
+
+  Plotly.newPlot('status-pie-chart', data, layout, { responsive: true, displayModeBar: false });
+}
+
+function renderSankeyChart() {
+  const { nodeLabels, links } = buildSankeyFlowData();
+  const container = document.getElementById('sankey-chart');
+
+  if (links.length === 0) {
+    container.innerHTML = '<p class="text-center text-slate-400 text-sm py-10">Not enough status changes yet to show a funnel. Update a few job statuses to see this fill in.</p>';
+    return;
+  }
+
+  const labelIndex = Object.fromEntries(nodeLabels.map((label, i) => [label, i]));
+  const isMobile = window.innerWidth < 640;
+
+  const data = [{
+    type: 'sankey',
+    orientation: 'h',
+    node: {
+      label: nodeLabels,
+      color: nodeLabels.map(label => sankeyNodeColors[label] || '#94a3b8'),
+      pad: isMobile ? 6 : 8,
+      thickness: isMobile ? 8 : 10,
+      line: { color: '#ffffff', width: 1 },
+    },
+    link: {
+      source: links.map(l => labelIndex[l.source]),
+      target: links.map(l => labelIndex[l.target]),
+      value: links.map(l => l.value),
+      color: links.map(l => (sankeyNodeColors[l.target] || '#94a3b8') + '55'),
+    },
+  }];
+
+  const layout = {
+    font: { size: isMobile ? 9 : 11, family: 'inherit' },
+    margin: { l: 10, r: 10, t: 10, b: 10 },
+    height: isMobile ? 200 : 260,
+  };
+
+  Plotly.newPlot('sankey-chart', data, layout, { responsive: true, displayModeBar: false });
+}
+
+viewTableBtn.addEventListener('click', () => switchView('table'));
+viewAnalyticsBtn.addEventListener('click', () => {
+  switchView('analytics');
+  renderStatCards();
+  renderStatusPieChart();
+  renderSankeyChart();
+});
+
+function getAllJobsData() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (!saved) return defaultRows;
+  try {
+    return JSON.parse(saved);
+  } catch (e) {
+    return defaultRows;
+  }
+}
+
+function buildSankeyFlowData() {
+  const jobs = getAllJobsData();
+  const flowCounts = {}; // key: "source→target", value: count
+
+  jobs.forEach(job => {
+    let history = job.history;
+    if (!Array.isArray(history) || history.length === 0) {
+      history = [{ status: job.status || 'Applied', date: job.date || todayISO() }];
+    }
+
+    // Edge from the starting point into the job's first recorded stage
+    addFlow('Applications', history[0].status);
+
+    // Edges between each consecutive stage change
+    for (let i = 0; i < history.length - 1; i++) {
+      addFlow(history[i].status, history[i + 1].status);
+    }
+  });
+
+  function addFlow(source, target) {
+    if (source === target) return; // skip no-op transitions
+    const key = `${source}→${target}`;
+    flowCounts[key] = (flowCounts[key] || 0) + 1;
+  }
+
+  const links = Object.entries(flowCounts).map(([key, value]) => {
+    const [source, target] = key.split('→');
+    return { source, target, value };
+  });
+
+  const nodeLabels = Array.from(
+    new Set(links.flatMap(link => [link.source, link.target]))
+  );
+
+  return { nodeLabels, links };
+}
+
+function computeStats() {
+  const jobs = getAllJobsData();
+  const appliedJobs = jobs.filter(job => job.status !== 'Wishlist');
+  const total = appliedJobs.length;
+
+  const hasReachedStage = (job, stages) => {
+    if (stages.includes(job.status)) return true;
+    return Array.isArray(job.history) && job.history.some(h => stages.includes(h.status));
+  };
+
+  const responded = appliedJobs.filter(job => hasReachedStage(job, ['Interviewing', 'Offer', 'Rejected'])).length;
+  const interviewed = appliedJobs.filter(job => hasReachedStage(job, ['Interviewing', 'Offer'])).length;
+  const offered = appliedJobs.filter(job => hasReachedStage(job, ['Offer'])).length;
+
+  const pct = (count) => total === 0 ? '—' : `${Math.round((count / total) * 100)}%`;
+
+  return {
+    total,
+    responseRate: pct(responded),
+    interviewRate: pct(interviewed),
+    offerRate: pct(offered),
+  };
+}
+
+function renderStatCards() {
+  const stats = computeStats();
+  document.getElementById('stat-total').textContent = stats.total;
+  document.getElementById('stat-response-rate').textContent = stats.responseRate;
+  document.getElementById('stat-interview-rate').textContent = stats.interviewRate;
+  document.getElementById('stat-offer-rate').textContent = stats.offerRate;
+}
+
 function initials(name) {
   return (name || '?').trim().charAt(0).toUpperCase();
 }
@@ -216,18 +545,16 @@ function createRow(data = {}) {
       <div class="cell-truncate text-slate-700">${data.location || '—'}</div>
       ${data.workMode ? `<span class="inline-flex items-center gap-1 mt-1 text-[10px] font-medium uppercase tracking-wide text-slate-500 bg-slate-100 border border-slate-200 rounded px-1.5 py-0.5">${icons.pin}${data.workMode}</span>` : ''}
     </td>
-    <td class="px-4 py-3 cell-truncate">${data.salary || '—'}</td>
     <td class="px-4 py-3 cell-truncate">
       <span class="hidden sm:inline">${data.date || '—'}</span>
       <span class="sm:hidden">${data.date ? shortDate(data.date) : '—'}</span>
     </td>
-    <td class="px-4 py-3 cell-truncate">
-      <span class="hidden sm:inline">${data.followUp || '—'}</span>
-      <span class="sm:hidden">${data.followUp ? shortDate(data.followUp) : '—'}</span>
+    <td class="px-4 py-3 cell-truncate followup-cell">
+      ${buildFollowUpHtml(status, data.followUp)}
     </td>
     <td class="px-4 py-3">
       <div class="flex items-center gap-2 text-slate-400">
-        <button class="view-notes-btn hover:text-slate-700" title="View notes">${icons.eye}</button>
+        <button class="view-notes-btn hover:text-slate-700" title="View details">${icons.eye}</button>
         <button class="link-btn hover:text-slate-700" title="Open job link">${icons.link}</button>
         <button class="edit-row-btn hover:text-slate-700" title="Edit">${icons.edit}</button>
         <button class="delete-row-btn hover:text-red-500" title="Delete">${icons.trash}</button>
@@ -245,10 +572,22 @@ function createRow(data = {}) {
   row.dataset.date = data.date || '';
   row.dataset.followUp = data.followUp || '';
 
+  const history = data.history && data.history.length
+    ? data.history
+    : [{ status, date: data.date || todayISO() }];
+  row.dataset.history = JSON.stringify(history);
+
   return row;
 }
 
 function getRowData(row) {
+  let history = [];
+  try {
+    history = JSON.parse(row.dataset.history || '[]');
+  } catch (e) {
+    history = [];
+  }
+
   return {
     company: row.dataset.company || '',
     role: row.dataset.role || '',
@@ -260,6 +599,7 @@ function getRowData(row) {
     followUp: row.dataset.followUp || '',
     link: row.dataset.link || '',
     notes: row.dataset.notes || '',
+    history: history,
   };
 }
 
@@ -291,10 +631,12 @@ function loadFromStorage() {
 function openNotesModal(row) {
   const role = row?.dataset.role || 'Untitled role';
   const company = row?.dataset.company || '';
+  const salary = row?.dataset.salary || '';
   const notes = row?.dataset.notes || '';
 
   notesModalTitle.textContent = role;
   notesModalSubtitle.textContent = company;
+  notesModalSalary.textContent = salary || 'Not specified';
   notesModalBody.textContent = notes || 'No notes added yet.';
 
   notesModal.classList.remove('hidden');
@@ -402,10 +744,23 @@ document.addEventListener('keydown', (event) => {
 jobForm.addEventListener('submit', (event) => {
   event.preventDefault();
 
+  const newStatus = fieldStatus.value;
+  let history = [];
+
+  if (editingRow) {
+    const previous = getRowData(editingRow);
+    history = previous.history || [];
+    if (previous.status !== newStatus) {
+      history = [...history, { status: newStatus, date: todayISO() }];
+    }
+  } else {
+    history = [{ status: newStatus, date: fieldDate.value || todayISO() }];
+  }
+
   const data = {
     company: fieldCompany.value.trim(),
     role: fieldRole.value.trim(),
-    status: fieldStatus.value,
+    status: newStatus,
     salary: fieldSalary.value.trim(),
     workMode: selectedWorkMode,
     location: fieldLocation.value.trim(),
@@ -413,6 +768,7 @@ jobForm.addEventListener('submit', (event) => {
     followUp: fieldFollowup.value,
     link: fieldLink.value.trim(),
     notes: fieldNotes.value.trim(),
+    history: history,
   };
 
   const newRow = createRow(data);
@@ -508,12 +864,30 @@ tableBody.addEventListener('click', (event) => {
 
   if (option) {
     const wrapper = option.closest('.status-wrapper');
+    const row = wrapper.closest('tr');
+    const previousStatus = wrapper.dataset.value;
     const newStatus = option.dataset.value;
     const trigger = wrapper.querySelector('.status-trigger');
     const label = wrapper.querySelector('.status-label');
 
     wrapper.dataset.value = newStatus;
     label.textContent = newStatus;
+
+    if (newStatus !== previousStatus) {
+      let history = [];
+      try {
+        history = JSON.parse(row.dataset.history || '[]');
+      } catch (e) {
+        history = [];
+      }
+      history.push({ status: newStatus, date: todayISO() });
+      row.dataset.history = JSON.stringify(history);
+    }
+
+    const followUpCell = row.querySelector('.followup-cell');
+    if (followUpCell) {
+      followUpCell.innerHTML = buildFollowUpHtml(newStatus, row.dataset.followUp);
+    }
 
     const allStatusClasses = Object.values(statusStyles).flatMap(c => c.split(' '));
     trigger.classList.remove(...allStatusClasses);
